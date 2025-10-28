@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  backend:
+    build: ./Device-related tools/device-util-demo
+    ports:
+      - "10000:10000"
+  binder:
+    build: ./Device-related tools/web-cabinet-bind
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+  tester:
+    build: ./Device-related tools/web-test-tool-demo
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

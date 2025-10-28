@@ -1,0 +1,17 @@
+# Stage 1: Build the application
+FROM maven:3.8.5-openjdk-11 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY brezze-communication/pom.xml ./brezze-communication/
+COPY brezze-api/pom.xml ./brezze-api/
+COPY utils-common/pom.xml ./utils-common/
+RUN mvn dependency:go-offline -B -f pom.xml
+COPY . .
+RUN mvn clean install -DskipTests
+
+# Stage 2: Create the final image
+FROM openjdk:11-jre-slim
+WORKDIR /app
+COPY --from=build /app/brezze-communication/target/*.jar /app/app.jar
+EXPOSE 10000
+ENTRYPOINT ["java","-jar","/app/app.jar"]
