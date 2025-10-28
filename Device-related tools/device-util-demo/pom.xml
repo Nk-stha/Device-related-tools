@@ -17,8 +17,6 @@
     <modules>
         <!--10000-->
         <module>brezze-communication</module>
-        <!--10001-->
-        <module>brezze-api</module>
 
         <module>utils-common</module>
 
@@ -89,6 +87,13 @@
             <url>https://repo.osgeo.org/</url>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <dependencies>
 

@@ -92,5 +92,10 @@
 
     </dependencies>
 
-
-</project>
+    <!-- 设置 jitpack.io 插件仓库 Xjar -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </pluginRepository>
+    </pluginRepositories></project>

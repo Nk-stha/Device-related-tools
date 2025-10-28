@@ -1,18 +1,79 @@
-version: '3.8'
+version: '3'
+
 services:
-  backend:
+  emqx1:
+    image: emqx:5.4.1
+    container_name: emqx1
+    environment:
+    - "EMQX_NODE_NAME=emqx@node1.emqx.io"
+    - "EMQX_CLUSTER__DISCOVERY_STRATEGY=static"
+    - "EMQX_CLUSTER__STATIC__SEEDS=[emqx@node1.emqx.io,emqx@node2.emqx.io]"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx ctl", "status"]
+      interval: 5s
+      timeout: 25s
+      retries: 5
+    networks:
+      emqx-bridge:
+        aliases:
+        - node1.emqx.io
+    ports:
+      - 1883:1883
+      - 8083:8083
+      - 8084:8084
+      - 8883:8883
+      - 18083:18083
+    # volumes:
+    #   - $PWD/emqx1_data:/opt/emqx/data
+
+  emqx2:
+    image: emqx:5.4.1
+    container_name: emqx2
+    environment:
+    - "EMQX_NODE_NAME=emqx@node2.emqx.io"
+    - "EMQX_CLUSTER__DISCOVERY_STRATEGY=static"
+    - "EMQX_CLUSTER__STATIC__SEEDS=[emqx@node1.emqx.io,emqx@node2.emqx.io]"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx ctl", "status"]
+      interval: 5s
+      timeout: 25s
+      retries: 5
+    networks:
+      emqx-bridge:
+        aliases:
+        - node2.emqx.io
+    # volumes:
+    #   - $PWD/emqx2_data:/opt/emqx/data
+
+  device-util-demo:
     build: ./Device-related tools/device-util-demo
+    container_name: device-util-demo
     ports:
       - "10000:10000"
-  binder:
-    build: ./Device-related tools/web-cabinet-bind
+    depends_on:
+      - emqx1
+      - emqx2
+    networks:
+      - emqx-bridge
+
+  web-cabinet-bind:
+    image: nginx:alpine
+    container_name: web-cabinet-bind
     ports:
       - "8081:80"
-    depends_on:
-      - backend
-  tester:
+    volumes:
+      - ./Device-related tools/web-cabinet-bind:/usr/share/nginx/html
+    networks:
+      - emqx-bridge
+
+  web-test-tool-demo:
     build: ./Device-related tools/web-test-tool-demo
+    container_name: web-test-tool-demo
     ports:
       - "3000:3000"
-    depends_on:
-      - backend
+    networks:
+      - emqx-bridge
+
+networks:
+  emqx-bridge:
+    driver: bridge
