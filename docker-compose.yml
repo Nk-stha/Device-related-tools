@@ -23,8 +23,8 @@ services:
       - 8084:8084
       - 8883:8883
       - 18083:18083
-    # volumes:
-    #   - $PWD/emqx1_data:/opt/emqx/data
+    volumes:
+      - $PWD/emqx1_data:/opt/emqx/data
 
   emqx2:
     image: emqx:5.4.1
@@ -42,8 +42,8 @@ services:
       emqx-bridge:
         aliases:
         - node2.emqx.io
-    # volumes:
-    #   - $PWD/emqx2_data:/opt/emqx/data
+    volumes:
+      - $PWD/emqx2_data:/opt/emqx/data
 
   device-util-demo:
     build: ./Device-related tools/device-util-demo
