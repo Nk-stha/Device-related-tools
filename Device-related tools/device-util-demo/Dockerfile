@@ -13,4 +13,4 @@ FROM openjdk:11-jre-slim
 WORKDIR /app
 COPY --from=build /app/brezze-communication/target/*.jar /app/app.jar
 EXPOSE 10000
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-Dfastdfs.jmx.enable=false","-jar","/app/app.jar"]
