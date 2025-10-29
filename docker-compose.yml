@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   emqx1:
@@ -45,14 +45,82 @@ services:
     volumes:
       - $PWD/emqx2_data:/opt/emqx/data
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_DATABASE: utils-demo
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
+      MYSQL_ROOT_PASSWORD: root_password # Change this in production
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-padmin123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - emqx-bridge
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - emqx-bridge
+    restart: unless-stopped
+
+  rabbitmq-init:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_init
+    command: >
+      bash -c "
+        echo 'Waiting for RabbitMQ to be fully up...' && \
+        until rabbitmqadmin -u admin -p admin123 list queues > /dev/null 2>&1; do 
+          echo 'RabbitMQ not yet ready, retrying in 5 seconds...'; 
+          sleep 5; 
+        done; 
+        echo 'RabbitMQ is up. Declaring queue...'; 
+        rabbitmqadmin -u admin -p admin123 declare queue name=ybt.delay.pb.open.lock durable=true; 
+        echo 'Queue ybt.delay.pb.open.lock declared.'
+      "
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - emqx-bridge
+    restart: "no"
+
   device-util-demo:
     build: ./Device-related tools/device-util-demo
-    container_name: device-util-demo
+    container_name: spring_boot_app
     ports:
       - "10000:10000"
     depends_on:
-      - emqx1
-      - emqx2
+      emqx1:
+        condition: service_started
+      emqx2:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-init:
+        condition: service_completed_successfully # Ensure queue is created before app starts
     networks:
       - emqx-bridge
 
@@ -77,3 +145,6 @@ services:
 networks:
   emqx-bridge:
     driver: bridge
+
+volumes:
+  mysql_data:

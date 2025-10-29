@@ -9,7 +9,7 @@ COPY . .
 RUN mvn clean install -DskipTests
 
 # Stage 2: Create the final image
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-focal
 WORKDIR /app
 COPY --from=build /app/brezze-communication/target/*.jar /app/app.jar
 EXPOSE 10000
